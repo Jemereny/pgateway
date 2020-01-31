@@ -5,6 +5,10 @@ const port = process.env.PORT || 9800;
 app.use(express.json())
 
 app.use('/', require('./routes/index'));
-app.use('/api', require('./routes/api/register'));
+
+apiroutes = [require("./routes/api/register"),
+            require("./routes/api/commonstudents")]
+
+app.use('/api', apiroutes);
 
 app.listen(port, () => console.log(`Listening on port ${port}...`))
