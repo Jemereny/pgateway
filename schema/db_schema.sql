@@ -22,6 +22,6 @@ CREATE TABLE `students` (
 CREATE TABLE `notifications` (
     teacher_email_id int NOT NULL,
     student_email_id int NOT NULL,
-    FOREIGN KEY(email) REFERENCES teachers(id),
-    FOREIGN KEY(email) REFERENCES students(id)
+    FOREIGN KEY(teacher_email_id) REFERENCES teachers(id),
+    FOREIGN KEY(student_email_id) REFERENCES students(id)
 );

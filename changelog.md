@@ -1,3 +1,7 @@
+# v0.0.7
+- Added mysql module for connection to mysql db
+- Added connection to db
+
 # v0.0.6
 - Added docker components to run locally
 - Added mysql and table schemas for teachers and students
