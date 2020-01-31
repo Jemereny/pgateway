@@ -1,3 +1,6 @@
+# v0.0.4
+- Setup suspend endpoint
+
 # v0.0.3
 - Setup commonstudents endpoint
 

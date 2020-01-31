@@ -1,6 +1,6 @@
 {
   "name": "govtech",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Govtech Assignment",
   "main": "app.js",
   "scripts": {
