@@ -1,3 +1,7 @@
+# v0.0.5
+- Setup retrievefornotifications endpoint
+- Modified error messages
+
 # v0.0.4
 - Setup suspend endpoint
 

@@ -12,7 +12,10 @@ router.get('/commonstudents', (req, res, next) => {
     const validationResult = Joi.validate(req.query, schema);
     
     if (validationResult.error) {
-        res.status(400).send(validationResult.error.details)
+        errorMessage = {
+            message: validationResult.error.details
+        }
+        res.status(400).send(errorMessage)
         return;
     }
 

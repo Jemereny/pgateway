@@ -11,7 +11,10 @@ router.post('/suspend', (req, res, next) => {
     const validationResult = Joi.validate(req.body, schema);
     
     if (validationResult.error) {
-        res.status(400).send(validationResult.error.details[0].message)
+        errorMessage = {
+            message: validationResult.error.details
+        }
+        res.status(400).send(errorMessage)
         return;
     }
 
