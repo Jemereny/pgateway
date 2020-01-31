@@ -1,3 +1,7 @@
+# v0.0.6
+- Added docker components to run locally
+- Added mysql and table schemas for teachers and students
+
 # v0.0.5
 - Setup retrievefornotifications endpoint
 - Modified error messages
