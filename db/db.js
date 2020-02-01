@@ -66,16 +66,23 @@ function createUserInTableIfNotExist(email, table) {
 }
 
 function addNotificationTeacherStudent(teacherEmail, studentEmail) {
-    const query = `INSERT INTO ${NOTIFICATION_TABLE} (teacher_email_id, student_email_id) 
-    VALUES ((SELECT id FROM ${TEACHER_TABLE} where email='${teacherEmail}'), 
-    (SELECT id FROM ${STUDENT_TABLE} where email='${studentEmail}'))`;
+    /**
+     * Adding to the notification table - teacher to student
+     */
+    const query = `
+            INSERT INTO ${NOTIFICATION_TABLE} (teacher_email_id, student_email_id) 
+            VALUES ((SELECT id FROM ${TEACHER_TABLE} where email='${teacherEmail}'), 
+            (SELECT id FROM ${STUDENT_TABLE} where email='${studentEmail}'))
+            `;
+
+    console.log(query)
     return new Promise((resolve, reject) => {
         connection.query(query, (err, rows) => {
             if (err) {
-                logger.log(err);
+                logger.log(err)
                 reject(err);
             }
-            console.log("HERE")
+            logger.log(`Notification added: ${teacherEmail} - ${studentEmail}`);
             resolve(true);
         });
     })
@@ -86,9 +93,30 @@ function registerTeacherStudent(teacherEmail, studentEmail) {
     createUserInTableIfNotExist(teacherEmail, TEACHER_TABLE)
     .then(() => {return createUserInTableIfNotExist(studentEmail, STUDENT_TABLE);})
     .then(() => {return addNotificationTeacherStudent(teacherEmail, studentEmail);})
-    .catch(err => logger.log(err));
+    .catch(err => {return false;});
+
+    return true;
+}
+
+async function registerTeacherStudents(teacherEmail, studentEmails) {
+
+    // Create entries if teacher/student does not exist
+    let createTeacherPromise = createUserInTableIfNotExist(teacherEmail, TEACHER_TABLE);
+    let createStudentPromises = [];
+    studentEmails.forEach(studentEmail => createStudentPromises.push(createUserInTableIfNotExist(studentEmail, STUDENT_TABLE)));
+
+    // Wait for all students to be created
+    await Promise.all([createTeacherPromise, ...createStudentPromises]).catch(err => {return false;});
+
+    // Set notifications
+    let addNotificationPromises = [];
+    studentEmails.forEach(studentEmail => addNotificationPromises.push(addNotificationTeacherStudent(teacherEmail, studentEmail)));
+
+    await Promise.all(addNotificationPromises).catch(err => {return false;});
+
+    return true;
 }
 
 module.exports = {
-    registerTeacherStudent: registerTeacherStudent
+    registerTeacherStudents: registerTeacherStudents
 };

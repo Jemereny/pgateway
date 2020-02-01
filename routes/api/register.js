@@ -1,9 +1,11 @@
 const express = require('express');
 const Joi = require('joi');
-const logger = require('../../logger/logger')
+const logger = require('../../logger/logger');
 const router = express.Router();
 
-router.post('/register', (req, res, next) => {
+const db = require("../../db/db");
+
+router.post('/register', async (req, res, next) => {
     const schema = {
         teacher: Joi.string().email().required(),
         students: Joi.array().items(Joi.string().email().required()).required()
@@ -19,7 +21,18 @@ router.post('/register', (req, res, next) => {
         return;
     }
 
-    res.status(204).send()
+    const values = validationResult.value;
+    const teacher = values.teacher;
+    const students = values.students;
+
+    console.log(students);
+    
+    const success = await db.registerTeacherStudents(teacher, students);
+    if (success) {
+        res.status(204).send()
+    } else {
+        res.status(500).send()
+    }
 });
 
 module.exports = router;

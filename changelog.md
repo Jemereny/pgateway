@@ -1,3 +1,7 @@
+# v0.0.9
+- Added multiple registration for student/teacher in db client
+- Add register functionality to register endpoint
+
 # v0.0.8
 - Modified db functions to be more robust and use promises for registration of student and teacher
 
