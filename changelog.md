@@ -1,3 +1,6 @@
+# v0.0.8
+- Modified db functions to be more robust and use promises for registration of student and teacher
+
 # v0.0.7
 - Added mysql module for connection to mysql db
 - Added connection to db

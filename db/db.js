@@ -1,9 +1,9 @@
-const logger = require('../logger/logger')
-const mysql = require('mysql')
+const logger = require('../logger/logger');
+const mysql = require('mysql');
 
 TEACHER_TABLE = "teachers"
 STUDENT_TABLE = "students"
-NOFITICATION_TABLE = "notifications"
+NOTIFICATION_TABLE = "notifications"
 
 const connection = mysql.createConnection({
     host: "127.0.0.1",
@@ -22,85 +22,72 @@ connection.connect((err) => {
     logger.log('mySql connected...')
 });
 
-function createTeacher(teacherEmail) {
+function createUserInTable(email, table) {
     /**
-     * This function is to create a teacher
-     * We have this function so that the "teachers" table is populated, so as to mock
-     * a real db
+     * This function is to create a user
+     * We have this function so that the table is populated, to mock a real db
      */
-    let query = `INSERT INTO ${TEACHER_TABLE} (email) VALUES ('${teacherEmail}')`
-    connection.query(query, (err,rows) => {
-        if (err) {
-            logger.log(err);
-            throw err;
-        }
-    })
-}
+    let query = `INSERT INTO ${table} (email) VALUES ('${email}')`
+    return new Promise((resolve, reject) => {
+            connection.query(query, (err,rows) => {
+            if (err) {
+                logger.log(err);
+                reject (err);
+            }
 
-function createStudent(studentEmail) {
-    /**
-     * This function is to create a student
-     * We have this function so that the "student" table is populated, so as to mock
-     * a real db
-     */
-    let query = `INSERT INTO ${STUDENT_TABLE} (email) VALUES ('${studentEmail}')`
-    connection.query(query, (err,rows) => {
-        if (err) {
-            logger.log(err);
-            throw err;
-        }
-    })
-}
-
-async function doesTeacherExist(teacherEmail, callback) {
-    let query = `SELECT email FROM ${TEACHER_TABLE} WHERE email='${teacherEmail}'`;
-    logger.log(query);
-    var result = connection.query(query, (err, rows) => {
-        if (err) {
-            logger.log(err);
-            throw err;
-        }
-
-        if (rows.length == 0) {
-            return callback(false);
-        } else {
-            return callback(true);
-        }
+            resolve(true);
+        });
     });
 }
 
-async function doesStudentExist(studentEmail, callback) {
-    let query = `SELECT email FROM ${STUDENT_TABLE} WHERE email='${studentEmail}'`
-    var result = connection.query(query, (err, rows) => {
-        if (err) {
-            logger.log(err);
-            throw err;
-        }
-
-        if (rows.length == 0) {
-            return callback(false);
-        } else {
-            return callback(true);
-        }
+function createUserInTableIfNotExist(email, table) {
+    /**
+     * Creates a user if a user does not exist in the table
+     */
+    let query = `SELECT email FROM ${table} WHERE email='${email}'`;
+    return new Promise((resolve, reject) => {
+        connection.query(query, (err, rows) => {
+            if (err) {
+                logger.log(err);
+                reject(err);
+            }
+            logger.log(`Creating user: ${email}`)
+            if (rows.length == 0) {
+                createUserInTable(email, table).then(isCreated => {
+                    // Resolve promise only if teacher exists
+                    resolve(true);
+                });
+            } else {
+                // Teacher already exists
+                resolve(true);
+            }
+        });
     });
 }
 
-async function registerTeacherStudent(teacherEmail, studentEmail) {
+function addNotificationTeacherStudent(teacherEmail, studentEmail) {
+    const query = `INSERT INTO ${NOTIFICATION_TABLE} (teacher_email_id, student_email_id) 
+    VALUES ((SELECT id FROM ${TEACHER_TABLE} where email='${teacherEmail}'), 
+    (SELECT id FROM ${STUDENT_TABLE} where email='${studentEmail}'))`;
+    return new Promise((resolve, reject) => {
+        connection.query(query, (err, rows) => {
+            if (err) {
+                logger.log(err);
+                reject(err);
+            }
+            console.log("HERE")
+            resolve(true);
+        });
+    })
+}
+
+function registerTeacherStudent(teacherEmail, studentEmail) {
     // Create entries if teacher/student does not exist
-    await doesTeacherExist(teacherEmail, (doesExist) => {
-        if (!doesExist) {
-            createTeacher(teacherEmail)
-        }
-    });
-
-    await doesStudentExist(studentEmail, (doesExist) => {
-        if (!doesExist) {
-            createStudent(studentEmail)
-        }
-    })
+    createUserInTableIfNotExist(teacherEmail, TEACHER_TABLE)
+    .then(() => {return createUserInTableIfNotExist(studentEmail, STUDENT_TABLE);})
+    .then(() => {return addNotificationTeacherStudent(teacherEmail, studentEmail);})
+    .catch(err => logger.log(err));
 }
-
-registerTeacherStudent("teacher@gmail.com", "student")
 
 module.exports = {
     registerTeacherStudent: registerTeacherStudent
