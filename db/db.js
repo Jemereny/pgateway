@@ -116,8 +116,7 @@ async function registerTeacherStudents(teacherEmail, studentEmails) {
     return true;
 }
 
-async function retrieveCommonStudentsFromTeachers(teacherEmails) {
-    
+async function getCommonStudentsFromTeachers(teacherEmails) {
     let getEmailIdQuery = `
     SELECT DISTINCT student_email_id
     FROM ${NOTIFICATION_TABLE} as a
@@ -158,6 +157,16 @@ async function retrieveCommonStudentsFromTeachers(teacherEmails) {
             resolve(studentEmails);
         });
     });
+}
+
+async function retrieveCommonStudentsFromTeachers(teacherEmails) {
+    const studentEmails = await getCommonStudentsFromTeachers(teacherEmails)
+    .catch(err => {
+            logger.log(err);
+            return null;
+        });
+
+    return studentEmails;
 }
 
 

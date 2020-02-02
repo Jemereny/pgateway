@@ -36,6 +36,11 @@ router.get('/commonstudents', async (req, res, next) => {
     // Retrieve data
     const studentEmails = await db.retrieveCommonStudentsFromTeachers(teachers)
 
+    if (studentEmails == null) {
+        res.status(500).send();
+        return;
+    }
+
     students = {
         students :studentEmails
     }

@@ -1,3 +1,6 @@
+# v0.0.11
+- Modified error handling for common students
+
 # v0.0.10
 - Added searching for common students in db client
 - Added finding common students functionality to commonstudents endpoint
