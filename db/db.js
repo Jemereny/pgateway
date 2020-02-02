@@ -169,8 +169,46 @@ async function retrieveCommonStudentsFromTeachers(teacherEmails) {
     return studentEmails;
 }
 
+async function updateSuspendStudent(studentEmail, is_suspended) {
+    const query = `
+    UPDATE ${STUDENT_TABLE}
+    SET is_suspended = ${is_suspended}
+    WHERE email='${studentEmail}'`;
+
+    console.log(query);
+
+    return new Promise((resolve, reject) => {
+        connection.query(query, (err, rows) => {
+            if (err) {
+                logger.log("updateSuspendStudent: " + err);
+                reject(err);
+            }
+
+            const affectedRows = rows["affectedRows"];
+
+            // Can only be 0 or 1, if 0, means none affected
+            if (affectedRows == 0) {
+                resolve(false);
+            }
+
+            resolve(true);
+        });
+    })
+}
+
+async function suspendStudent(studentEmail) {
+    const has_succeeded = await updateSuspendStudent(studentEmail, true)
+    .catch(err => 
+        {
+            logger.log(err);
+            return null;
+        });
+
+    return has_succeeded;
+}
 
 module.exports = {
     registerTeacherStudents: registerTeacherStudents,
-    retrieveCommonStudentsFromTeachers: retrieveCommonStudentsFromTeachers
+    retrieveCommonStudentsFromTeachers: retrieveCommonStudentsFromTeachers,
+    suspendStudent: suspendStudent
 };

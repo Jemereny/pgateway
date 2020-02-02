@@ -1,9 +1,11 @@
 const express = require('express');
 const Joi = require('joi');
-const logger = require('../../logger/logger')
+const logger = require('../../logger/logger');
 const router = express.Router();
 
-router.post('/suspend', (req, res, next) => {
+const db = require('../../db/db');
+
+router.post('/suspend', async (req, res, next) => {
     const schema = {
         student: Joi.string().email().required()
     };
@@ -18,7 +20,15 @@ router.post('/suspend', (req, res, next) => {
         return;
     }
 
-    // Suspend student 
+    studentEmail = validationResult.value["student"]
+
+    // Suspend student
+    const has_succeeded = await db.suspendStudent(studentEmail);
+
+    if (!has_succeeded) {
+        res.status(200).send("User does not exist");
+        return;
+    }
 
     res.status(204).send()
 });

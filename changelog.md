@@ -1,3 +1,7 @@
+# v0.0.12
+- Added updating of students in db client
+- Added functionality to suspend endpoint
+
 # v0.0.11
 - Modified error handling for common students
 
