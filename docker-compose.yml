@@ -1,0 +1,21 @@
+version: '3'
+services:
+  govtech:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    ports:
+    - 9800:9800
+    depends_on:
+    - mysql
+
+  mysql:
+    image: mysql:5.7
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: govtech
+    ports:
+    - "3306:3306"
+    volumes:
+    - ./schema/db_schema.sql:/docker-entrypoint-initdb.d/db_schema.sql
+    restart: always

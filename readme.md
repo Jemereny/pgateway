@@ -4,6 +4,9 @@ This is an introduction to the project
 
 # Requirements
 
-    NodeJS
+    Docker
+    Docker-compose
 
-NodeJS version: v8.10.0
+With docker and docker-compose, the services will can be run locally. 
+
+`docker-compose up` to run the application
