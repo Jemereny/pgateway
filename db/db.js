@@ -15,7 +15,7 @@ const connection = mysql.createConnection({
 
 connection.connect((err) => {
     if (err) {
-        logger.log(err);
+        logger.log("connection.connect: " + err);
         throw err;
     }
 
@@ -31,7 +31,7 @@ function createUserInTable(email, table) {
     return new Promise((resolve, reject) => {
             connection.query(query, (err,rows) => {
             if (err) {
-                logger.log(err);
+                logger.log("createUserInTable: " +err);
                 reject (err);
             }
 
@@ -48,7 +48,7 @@ function createUserInTableIfNotExist(email, table) {
     return new Promise((resolve, reject) => {
         connection.query(query, (err, rows) => {
             if (err) {
-                logger.log(err);
+                logger.log("createUserInTableIfNotExist: " + err);
                 reject(err);
             }
             logger.log(`Creating user: ${email}`)
@@ -75,11 +75,10 @@ function addNotificationTeacherStudent(teacherEmail, studentEmail) {
             (SELECT id FROM ${STUDENT_TABLE} where email='${studentEmail}'))
             `;
 
-    console.log(query)
     return new Promise((resolve, reject) => {
         connection.query(query, (err, rows) => {
             if (err) {
-                logger.log(err)
+                logger.log("addNotificationTeacherStudent: " + err)
                 reject(err);
             }
             logger.log(`Notification added: ${teacherEmail} - ${studentEmail}`);
@@ -117,6 +116,52 @@ async function registerTeacherStudents(teacherEmail, studentEmails) {
     return true;
 }
 
+async function retrieveCommonStudentsFromTeachers(teacherEmails) {
+    
+    let getEmailIdQuery = `
+    SELECT DISTINCT student_email_id
+    FROM ${NOTIFICATION_TABLE} as a
+    WHERE (1=1)
+    `
+    teacherEmails.forEach((teacherEmail) => {
+        // For each teacher, sub query it to obtain the intersection
+        let subquery = `
+        AND a.student_email_id in (
+            SELECT student_email_id
+            from ${NOTIFICATION_TABLE}
+            WHERE teacher_email_id = `
+
+        subquery += `(SELECT id FROM ${TEACHER_TABLE} where email='${teacherEmail}')`;
+        subquery += `)`;
+
+        // Add to query
+        getEmailIdQuery += subquery;
+    })
+
+    // Query to get the students emails instead of id
+    let query = `
+    SELECT email 
+    FROM ${STUDENT_TABLE}
+    RIGHT JOIN (${getEmailIdQuery}) b
+    ON ${STUDENT_TABLE}.id = b.student_email_id`;
+
+    return new Promise((resolve,reject) => {
+        connection.query(query, (err, rows) => {
+            if (err) {
+                logger.log("retrieveCommonStudentsFromTeacher: " + err);
+                reject(err);
+            }
+
+            const studentEmails = []
+            rows.forEach(row => studentEmails.push(row["email"]));
+            
+            resolve(studentEmails);
+        });
+    });
+}
+
+
 module.exports = {
-    registerTeacherStudents: registerTeacherStudents
+    registerTeacherStudents: registerTeacherStudents,
+    retrieveCommonStudentsFromTeachers: retrieveCommonStudentsFromTeachers
 };

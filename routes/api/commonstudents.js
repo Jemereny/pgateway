@@ -1,28 +1,43 @@
 const express = require('express');
 const Joi = require('joi');
-const logger = require('../../logger/logger')
+const logger = require('../../logger/logger');
 const router = express.Router();
 
-router.get('/commonstudents', (req, res, next) => {
+const db = require("../../db/db");
 
-    const schema = {
-        teacher: Joi.array().items(Joi.string().email()).required()
-    }
+router.get('/commonstudents', async (req, res, next) => {
 
-    const validationResult = Joi.validate(req.query, schema);
+    const singleSchema = {
+        teacher: Joi.string().email().required()
+    };
     
-    if (validationResult.error) {
+    const multipleSchema = {
+        teacher: Joi.array().items(Joi.string().email()).required()
+    };
+
+    const singleValidationResult = Joi.validate(req.query, singleSchema)
+    const multipleValidationResult = Joi.validate(req.query, multipleSchema);
+    
+    if (singleValidationResult.error && multipleValidationResult.error) {
         errorMessage = {
-            message: validationResult.error.details
+            message: singleValidationResult.error.details
         }
         res.status(400).send(errorMessage)
         return;
     }
 
+    let teachers;
+    if (singleValidationResult.error) {
+        teachers = multipleValidationResult.value["teacher"]
+    } else {
+        teachers = [singleValidationResult.value["teacher"]]
+    }
+
     // Retrieve data
+    const studentEmails = await db.retrieveCommonStudentsFromTeachers(teachers)
 
     students = {
-        students :[]
+        students :studentEmails
     }
 
     res.status(200).send(students)

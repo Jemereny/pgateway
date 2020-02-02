@@ -1,3 +1,7 @@
+# v0.0.10
+- Added searching for common students in db client
+- Added finding common students functionality to commonstudents endpoint
+
 # v0.0.9
 - Added multiple registration for student/teacher in db client
 - Add register functionality to register endpoint
