@@ -26,6 +26,10 @@ function createUserInTable(email, table) {
     /**
      * This function is to create a user
      * We have this function so that the table is populated, to mock a real db
+     * 
+     * Returns
+     * - True on success
+     * - False on error
      */
     let query = `INSERT INTO ${table} (email) VALUES ('${email}')`
     return new Promise((resolve, reject) => {
@@ -43,6 +47,10 @@ function createUserInTable(email, table) {
 function createUserInTableIfNotExist(email, table) {
     /**
      * Creates a user if a user does not exist in the table
+     * 
+     * Returns
+     * - True on success
+     * - False on error
      */
     let query = `SELECT email FROM ${table} WHERE email='${email}'`;
     return new Promise((resolve, reject) => {
@@ -68,6 +76,10 @@ function createUserInTableIfNotExist(email, table) {
 function addNotificationTeacherStudent(teacherEmail, studentEmail) {
     /**
      * Adding to the notification table - teacher to student
+     * 
+     * Returns
+     * - True on success
+     * - False on error
      */
     const query = `
             INSERT INTO ${NOTIFICATION_TABLE} (teacher_email_id, student_email_id) 
@@ -87,17 +99,17 @@ function addNotificationTeacherStudent(teacherEmail, studentEmail) {
     })
 }
 
-function registerTeacherStudent(teacherEmail, studentEmail) {
-    // Create entries if teacher/student does not exist
-    createUserInTableIfNotExist(teacherEmail, TEACHER_TABLE)
-    .then(() => {return createUserInTableIfNotExist(studentEmail, STUDENT_TABLE);})
-    .then(() => {return addNotificationTeacherStudent(teacherEmail, studentEmail);})
-    .catch(err => {return false;});
-
-    return true;
-}
-
 async function registerTeacherStudents(teacherEmail, studentEmails) {
+    /**
+     * Registers a teacher and a student into the notifiation table
+     * 
+     * Creates teacher/student if teacher/student does not exist 
+     * and adds into notification table
+     * 
+     * Returns
+     * - True if success
+     * - False if error has occured
+     */
 
     // Create entries if teacher/student does not exist
     let createTeacherPromise = createUserInTableIfNotExist(teacherEmail, TEACHER_TABLE);
@@ -105,18 +117,32 @@ async function registerTeacherStudents(teacherEmail, studentEmails) {
     studentEmails.forEach(studentEmail => createStudentPromises.push(createUserInTableIfNotExist(studentEmail, STUDENT_TABLE)));
 
     // Wait for all students to be created
-    await Promise.all([createTeacherPromise, ...createStudentPromises]).catch(err => {return false;});
+    await Promise.all([createTeacherPromise, ...createStudentPromises]).catch(err => {
+        logger.log("registerTeacherStudents:" + err);
+        return false;
+    });
 
     // Set notifications
     let addNotificationPromises = [];
     studentEmails.forEach(studentEmail => addNotificationPromises.push(addNotificationTeacherStudent(teacherEmail, studentEmail)));
 
-    await Promise.all(addNotificationPromises).catch(err => {return false;});
+    await Promise.all(addNotificationPromises).catch(err => {
+        logger.log("registerTeacherStudents:" + err);
+        return false;
+    });
 
     return true;
 }
 
 async function getCommonStudentsFromTeachers(teacherEmails) {
+    /**
+     * Gets the common students from all different teachers
+     * 
+     * The query is dynamic so to accomodate the multiple teacher emails
+     * Returns:
+     * - [] of student emails who have the teachers that are input in common.
+     * 
+     */
     let getEmailIdQuery = `
     SELECT DISTINCT student_email_id
     FROM ${NOTIFICATION_TABLE} as a
@@ -160,9 +186,16 @@ async function getCommonStudentsFromTeachers(teacherEmails) {
 }
 
 async function retrieveCommonStudentsFromTeachers(teacherEmails) {
+    /**
+     * Retrieves common students from teachers
+     * 
+     * Returns:
+     * - [] of student emails who have the teachers that are input in common.
+     * - null if an error has occured
+     */
     const studentEmails = await getCommonStudentsFromTeachers(teacherEmails)
     .catch(err => {
-        logger.log(err);
+        logger.log("retrieveCommonStudentsFromTeachers: " + err);
         return null;
     });
 
@@ -170,6 +203,13 @@ async function retrieveCommonStudentsFromTeachers(teacherEmails) {
 }
 
 async function updateSuspendStudent(studentEmail, is_suspended) {
+    /**
+     * Updates is_suspended value in student table
+     * 
+     * Returns
+     * - True if a row is updated (user exists)
+     * - False if a row is not updated (user does not exist)
+     */
     const query = `
     UPDATE ${STUDENT_TABLE}
     SET is_suspended = ${is_suspended}
@@ -199,11 +239,17 @@ async function updateSuspendStudent(studentEmail, is_suspended) {
 async function suspendStudent(studentEmail) {
     /**
      * Suspends a student
+     * 
+     * Returns:
+     * - True update succeeds
+     * - False if no rows are affected
+     * - null if an error in the sql has occured.
+     * 
      */
     const has_succeeded = await updateSuspendStudent(studentEmail, true)
     .catch(err => 
         {
-            logger.log(err);
+            logger.log("suspendStudent: " + err);
             return null;
         });
 
@@ -213,6 +259,10 @@ async function suspendStudent(studentEmail) {
 async function retrieveAllStudentsWithSuspension(is_suspended) {
     /**
      * Returns all students which are suspended/not suspended
+     * 
+     * Returns:
+     * - [] of student emails who are suspended
+     *
      */
     const query = `
     SELECT email
@@ -224,7 +274,7 @@ async function retrieveAllStudentsWithSuspension(is_suspended) {
         connection.query(query, (err, rows) => {
             if (err) {
                 logger.log("retrieveAllStudents: " + err);
-                reject(err);
+                reject("retrieveAllStudentsWithSuspension:" + err);
             }
 
             const studentEmails = []
@@ -237,12 +287,16 @@ async function retrieveAllStudentsWithSuspension(is_suspended) {
 
 async function retrieveAllSuspendedStudents() {
     /**
-     * Return all suspended students
+     * Retrieves all suspended students
+     * 
+     * Returns
+     * - [] of student emails who are suspended
+     * - null if an error has occured
      */
 
      studentEmails = await retrieveAllStudentsWithSuspension(true)
      .catch(err => {
-         logger.log(err);
+         logger.log("retrieveAllSuspendedStudents: " + err);
          return null;
      });
 
@@ -250,6 +304,12 @@ async function retrieveAllSuspendedStudents() {
 }
 
 async function retrieveStudentsForNotification(teacherEmail, is_suspended) {
+    /**
+     * Retrieves students who are under a teacher and is not suspended
+     * 
+     * Returns:
+     * - [] of students who is under a specific teacher's notification's list and is not suspended
+     */
     const teacherIdQuery= `
     SELECT id
     FROM ${TEACHER_TABLE}
@@ -277,7 +337,7 @@ async function retrieveStudentsForNotification(teacherEmail, is_suspended) {
     return new Promise((resolve, reject) => {
         connection.query(query, (err, rows) => {
             if (err) {
-                logger.log(err);
+                logger.log("retrieveStudentsForNotification: " + err);
                 reject(err);
             }
 
@@ -292,10 +352,14 @@ async function retrieveStudentsForNotification(teacherEmail, is_suspended) {
 async function retrieveNotSuspendedStudentsForNotification(teacherEmail) {
     /**
      * Retrieve students who are not suspended and is under a teacher's notification list
+     * 
+     * Returns:
+     * - [] of students who are not suspended and is under a teacher's notification list
+     * - null if an error has occured
      */
     const studentEmails = await retrieveStudentsForNotification(teacherEmail, false)
     .catch(err => {
-        logger.log(err);
+        logger.log("retrieveNotSuspendedStudentsForNotification: " + err);
         return null;
     });
 
