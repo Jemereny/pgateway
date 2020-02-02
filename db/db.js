@@ -162,9 +162,9 @@ async function getCommonStudentsFromTeachers(teacherEmails) {
 async function retrieveCommonStudentsFromTeachers(teacherEmails) {
     const studentEmails = await getCommonStudentsFromTeachers(teacherEmails)
     .catch(err => {
-            logger.log(err);
-            return null;
-        });
+        logger.log(err);
+        return null;
+    });
 
     return studentEmails;
 }
@@ -207,8 +207,62 @@ async function suspendStudent(studentEmail) {
     return has_succeeded;
 }
 
+async function retrieveStudentsForNotification(teacherEmail, is_suspended) {
+    const teacherIdQuery= `
+    SELECT id
+    FROM ${TEACHER_TABLE}
+    WHERE email='${teacherEmail}'
+    `
+
+    // Query selects all students who are under teacherEmail
+    // Then joins with the students table who is not suspended
+    // Returned is the students who are not suspended and under teacherEmail
+    const query = `
+    SELECT email
+    FROM (
+        SELECT id, email
+        FROM ${STUDENT_TABLE}
+        WHERE is_suspended=${is_suspended}
+    ) a
+    INNER JOIN (
+        SELECT student_email_id
+        FROM ${NOTIFICATION_TABLE}
+        WHERE teacher_email_id=(${teacherIdQuery})
+    ) b
+    ON a.id=b.student_email_id
+    `
+
+    return new Promise((resolve, reject) => {
+        connection.query(query, (err, rows) => {
+            if (err) {
+                logger.log(err);
+                reject(err);
+            }
+
+            const studentEmails = [];
+            rows.forEach(row => studentEmails.push(row["email"]))
+
+            resolve(studentEmails);
+        })
+    })
+}
+
+async function retrieveNotSuspendedStudentsForNotification(teacherEmail) {
+    /**
+     * Retrieve students who are not suspended and is under a teacher's notification list
+     */
+    const studentEmails = await retrieveStudentsForNotification(teacherEmail, false)
+    .catch(err => {
+        logger.log(err);
+        return null;
+    });
+
+    return studentEmails
+}
+
 module.exports = {
     registerTeacherStudents: registerTeacherStudents,
     retrieveCommonStudentsFromTeachers: retrieveCommonStudentsFromTeachers,
-    suspendStudent: suspendStudent
+    suspendStudent: suspendStudent,
+    retrieveNotSuspendedStudentsForNotification: retrieveNotSuspendedStudentsForNotification
 };

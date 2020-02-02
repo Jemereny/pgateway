@@ -3,7 +3,9 @@ const Joi = require('joi');
 const logger = require('../../logger/logger')
 const router = express.Router();
 
-router.post('/retrievefornotifications', (req, res, next) => {
+const db = require('../../db/db');
+
+router.post('/retrievefornotifications', async (req, res, next) => {
     const schema = {
         teacher: Joi.string().email().required(),
         notification: Joi.string().required()
@@ -19,9 +21,24 @@ router.post('/retrievefornotifications', (req, res, next) => {
         return;
     }
 
-    // Suspend student 
+    const values = validationResult.value;
+
+    const teacherEmail = values["teacher"];
+    const notification = values["notification"];
+
+
+    // Get list
+    studentEmails = await db.retrieveNotSuspendedStudentsForNotification(teacherEmail);
+
+    if (studentEmails === null) {
+        res.status(500).send();
+        return;
+    }
 
     res.status(204).send()
 });
+
+
+
 
 module.exports = router;
