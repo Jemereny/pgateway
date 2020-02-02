@@ -197,6 +197,9 @@ async function updateSuspendStudent(studentEmail, is_suspended) {
 }
 
 async function suspendStudent(studentEmail) {
+    /**
+     * Suspends a student
+     */
     const has_succeeded = await updateSuspendStudent(studentEmail, true)
     .catch(err => 
         {
@@ -205,6 +208,45 @@ async function suspendStudent(studentEmail) {
         });
 
     return has_succeeded;
+}
+
+async function retrieveAllStudentsWithSuspension(is_suspended) {
+    /**
+     * Returns all students which are suspended/not suspended
+     */
+    const query = `
+    SELECT email
+    FROM ${STUDENT_TABLE}
+    WHERE is_suspended=${is_suspended}
+    `
+
+    return new Promise((resolve, reject) => {
+        connection.query(query, (err, rows) => {
+            if (err) {
+                logger.log("retrieveAllStudents: " + err);
+                reject(err);
+            }
+
+            const studentEmails = []
+            rows.forEach(row => studentEmails.push(row["email"]))
+
+            resolve(studentEmails);
+        })
+    })
+}
+
+async function retrieveAllSuspendedStudents() {
+    /**
+     * Return all suspended students
+     */
+
+     studentEmails = await retrieveAllStudentsWithSuspension(true)
+     .catch(err => {
+         logger.log(err);
+         return null;
+     });
+
+     return studentEmails;
 }
 
 async function retrieveStudentsForNotification(teacherEmail, is_suspended) {
@@ -264,5 +306,6 @@ module.exports = {
     registerTeacherStudents: registerTeacherStudents,
     retrieveCommonStudentsFromTeachers: retrieveCommonStudentsFromTeachers,
     suspendStudent: suspendStudent,
-    retrieveNotSuspendedStudentsForNotification: retrieveNotSuspendedStudentsForNotification
+    retrieveNotSuspendedStudentsForNotification: retrieveNotSuspendedStudentsForNotification,
+    retrieveAllSuspendedStudents: retrieveAllSuspendedStudents
 };

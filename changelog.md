@@ -1,3 +1,6 @@
+# v0.0.13
+- Added functionality to retrievefornotifications endpoint
+
 # v0.0.12
 - Added updating of students in db client
 - Added functionality to suspend endpoint
