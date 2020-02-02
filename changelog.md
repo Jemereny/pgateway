@@ -1,3 +1,9 @@
+# v0.0.14
+- Refactored add notification query to not have duplicates
+- Refactored create user query to not have duplicates
+- Modified database schema for students and teachers to have unique emails
+- Fix register bug on returning before promise ends
+
 # v0.0.13
 - Added functionality to retrievefornotifications endpoint
 

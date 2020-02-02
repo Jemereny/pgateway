@@ -24,8 +24,6 @@ router.post('/register', async (req, res, next) => {
     const values = validationResult.value;
     const teacher = values.teacher;
     const students = values.students;
-
-    console.log(students);
     
     const success = await db.registerTeacherStudents(teacher, students);
     if (success) {

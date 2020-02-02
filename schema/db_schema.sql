@@ -9,14 +9,16 @@ DROP TABLE IF EXISTS `students`;
 CREATE TABLE `teachers` (
     id int NOT NULL AUTO_INCREMENT,
     email varchar(255) NOT NULL,
-    PRIMARY KEY(id)
+    PRIMARY KEY(id),
+    UNIQUE (email)
 );
 
 CREATE TABLE `students` (
     id int NOT NULL AUTO_INCREMENT,
     email varchar(255) NOT NULL,
     is_suspended BOOLEAN NOT NULL DEFAULT 0,
-    PRIMARY KEY(id)
+    PRIMARY KEY(id),
+    UNIQUE (email)
 );
 
 CREATE TABLE `notifications` (

@@ -22,20 +22,28 @@ connection.connect((err) => {
     logger.log('mySql connected...')
 });
 
-function createUserInTable(email, table) {
+function createUserInTableIfNotExist(email, table) {
     /**
-     * This function is to create a user
+     * This function is to create a user if user does not exists
      * We have this function so that the table is populated, to mock a real db
      * 
      * Returns
      * - True on success
      * - False on error
      */
-    let query = `INSERT INTO ${table} (email) VALUES ('${email}')`
+    let query = `
+    INSERT INTO ${table} (email)
+    SELECT * FROM (SELECT '${email}') a
+    WHERE NOT EXISTS (
+        SELECT * 
+        FROM ${table}
+        WHERE email='${email}'
+        )
+    `
     return new Promise((resolve, reject) => {
             connection.query(query, (err,rows) => {
             if (err) {
-                logger.log("createUserInTable: " +err);
+                logger.log("createUserInTable: " + err);
                 reject (err);
             }
 
@@ -44,48 +52,37 @@ function createUserInTable(email, table) {
     });
 }
 
-function createUserInTableIfNotExist(email, table) {
-    /**
-     * Creates a user if a user does not exist in the table
-     * 
-     * Returns
-     * - True on success
-     * - False on error
-     */
-    let query = `SELECT email FROM ${table} WHERE email='${email}'`;
-    return new Promise((resolve, reject) => {
-        connection.query(query, (err, rows) => {
-            if (err) {
-                logger.log("createUserInTableIfNotExist: " + err);
-                reject(err);
-            }
-            logger.log(`Creating user: ${email}`)
-            if (rows.length == 0) {
-                createUserInTable(email, table).then(isCreated => {
-                    // Resolve promise only if teacher exists
-                    resolve(true);
-                });
-            } else {
-                // Teacher already exists
-                resolve(true);
-            }
-        });
-    });
-}
-
 function addNotificationTeacherStudent(teacherEmail, studentEmail) {
     /**
      * Adding to the notification table - teacher to student
      * 
+     * Does not add duplicates. If teacher has a student in the notifications table,
+     * there will not be another entry
+     * 
      * Returns
      * - True on success
      * - False on error
      */
+    const selectStudentIdQuery = `
+    SELECT id FROM ${STUDENT_TABLE}
+    WHERE email='${studentEmail}'
+    `
+
+    const selectTeacherIdQuery = `
+    SELECT id FROM ${TEACHER_TABLE}
+    WHERE email='${teacherEmail}'
+    `
+
     const query = `
-            INSERT INTO ${NOTIFICATION_TABLE} (teacher_email_id, student_email_id) 
-            VALUES ((SELECT id FROM ${TEACHER_TABLE} where email='${teacherEmail}'), 
-            (SELECT id FROM ${STUDENT_TABLE} where email='${studentEmail}'))
-            `;
+    INSERT INTO ${NOTIFICATION_TABLE} (teacher_email_id, student_email_id)
+    SELECT * FROM ((${selectTeacherIdQuery}) a,(${selectStudentIdQuery}) b)
+    WHERE NOT EXISTS (
+        SELECT * 
+        FROM ${NOTIFICATION_TABLE} 
+        WHERE teacher_email_id=(${selectTeacherIdQuery})
+        AND student_email_id=(${selectStudentIdQuery})
+        )
+    `
 
     return new Promise((resolve, reject) => {
         connection.query(query, (err, rows) => {
@@ -93,7 +90,12 @@ function addNotificationTeacherStudent(teacherEmail, studentEmail) {
                 logger.log("addNotificationTeacherStudent: " + err)
                 reject(err);
             }
-            logger.log(`Notification added: ${teacherEmail} - ${studentEmail}`);
+
+            if (rows["affectedRows"] === 1) {
+                // If there is a row which is added
+                logger.log(`Notification added: ${teacherEmail} - ${studentEmail}`);
+            }
+            
             resolve(true);
         });
     })
@@ -126,12 +128,14 @@ async function registerTeacherStudents(teacherEmail, studentEmails) {
     let addNotificationPromises = [];
     studentEmails.forEach(studentEmail => addNotificationPromises.push(addNotificationTeacherStudent(teacherEmail, studentEmail)));
 
-    await Promise.all(addNotificationPromises).catch(err => {
+    await Promise.all(addNotificationPromises)
+    .then(() => {
+        return true;
+    })
+    .catch(err => {
         logger.log("registerTeacherStudents:" + err);
         return false;
     });
-
-    return true;
 }
 
 async function getCommonStudentsFromTeachers(teacherEmails) {
@@ -214,8 +218,6 @@ async function updateSuspendStudent(studentEmail, is_suspended) {
     UPDATE ${STUDENT_TABLE}
     SET is_suspended = ${is_suspended}
     WHERE email='${studentEmail}'`;
-
-    console.log(query);
 
     return new Promise((resolve, reject) => {
         connection.query(query, (err, rows) => {
