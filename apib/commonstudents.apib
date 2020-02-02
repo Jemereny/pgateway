@@ -1,0 +1,56 @@
+# API Common students
+
+# Common Students [/api/commonstudents]
+
+## Retrieving common students to a list of teachers [GET /api/commonstudents?teacher]
+Retrieving common students to a list of teachers
+
++ Parameters
+    + teacher (required, string, 'teacher@gmail.com') ... retrieves students who are in the teacher's list
+
++ Response 200
+
+    + Body
+
+        {
+            "students": [
+                "commonstudent1@gmail.com",
+                "commonstudent2@gmail.com"
+            ]
+        }
+
+    + Schema
+
+        {
+            "type": "object"
+            "properties" {
+                "students": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                    "minItems": 0
+                }
+            }
+        }
+
++ Response 400
+
+    + Body
+
+        {
+            "message": "error message"
+        }
+
+    + Schema
+
+        {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        }
+
++ Response 500

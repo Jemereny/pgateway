@@ -1,0 +1,77 @@
+# API Retrieve for notifications
+
+# Retrieve for notifications [/api/retrievefornotifications]
+
+## Retrieve students for notifications [POST]
+Retrieving students for notifications under a teacher
+
++ Request(application/json)
+
+    + Body 
+
+        {
+            "teacher": "teacher@gmail.com"
+            "notification": "Hello students! @studentagnes@gmail.com @studentmiche@gmail.com"
+        }
+
+    +Schema
+
+        {
+            "type": "object",
+            "properties" {
+                "teacher": {
+                    "type": "string"
+                },
+                "notification": {
+                    "type": "string"
+                }
+            }
+        }
+
+
++ Response 200
+
+    + Body
+
+        {
+            "students" : [
+                "studentagnes@gmail.com",
+                "studentmiche@gmail.com"
+            ]
+        }
+
+    + Schema
+
+        {
+            "type": "object",
+            "properties" {
+                "students": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                    "minItems": 0
+                }
+            }
+        }
+
++ Response 400
+
+    + Body
+
+        {
+            "message": "error message"
+        }
+
+    + Schema
+
+        {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        }
+
++ Response 500

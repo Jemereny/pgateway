@@ -63,7 +63,7 @@ router.post('/retrievefornotifications', async (req, res, next) => {
     
     if (validationResult.error) {
         errorMessage = {
-            message: validationResult.error.details
+            message: validationResult.error.details[0].message
         }
         res.status(400).send(errorMessage)
         return;

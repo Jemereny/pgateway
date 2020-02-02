@@ -20,7 +20,7 @@ router.get('/commonstudents', async (req, res, next) => {
     
     if (singleValidationResult.error && multipleValidationResult.error) {
         errorMessage = {
-            message: singleValidationResult.error.details
+            message: singleValidationResult.error.details[0].message
         }
         res.status(400).send(errorMessage)
         return;

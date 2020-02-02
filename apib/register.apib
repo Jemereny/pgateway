@@ -1,0 +1,59 @@
+# API Register
+
+# Register [/api/register]
+
+## Register student to teacher [POST]
+Registering students to teacher
+
++ Request(application/json)
+
+    + Body 
+
+        {
+            "teacher": "teacher@gmail.com"
+            "students": [
+                "studentjon@gmail.com",
+                "studenthon@gmail.com"
+            ]
+        }
+
+    +Schema
+
+        {
+            "type": "object",
+            "properties" {
+                "teacher": {
+                    "type": "string"
+                },
+                "students": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "minItems": 1
+                }
+            }
+        }
+
++ Response 204
+
++ Response 400
+
+    + Body
+
+        {
+            "message": "error message"
+        }
+
+    + Schema
+
+        {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        }
+
++ Response 500

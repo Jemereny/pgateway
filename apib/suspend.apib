@@ -1,0 +1,46 @@
+# API Suspend
+
+# Suspend [/api/suspend]
+
+## Suspending a student [POST]
+Suspending a student
+
++ Request(application/json)
+
+    + Body 
+
+        {
+            "student": "studentjon@gmail.com"
+        }
+
+    +Schema
+
+        {
+            "type": "object",
+            "properties": {
+                "student": {
+                    "type": "string"
+                }
+            }
+        }
+
++ Response 204
+
++ Response 400
+
+    + Body
+
+        {
+            "message": "error message"
+        }
+
+    + Schema
+
+        {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        }
