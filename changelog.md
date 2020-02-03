@@ -1,3 +1,7 @@
+# v0.0.15
+- Added test module 'jest'
+- Added unit test for parsing notifications
+
 # v0.0.14
 - Refactored add notification query to not have duplicates
 - Refactored create user query to not have duplicates
