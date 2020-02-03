@@ -6,8 +6,7 @@ STUDENT_TABLE = "students"
 NOTIFICATION_TABLE = "notifications"
 
 const connection = mysql.createConnection({
-    host: "127.0.0.1",
-    // host: 'mysql',
+    host: "mysql",
     user: 'root',
     password: 'password',
     database: 'govtech'
@@ -105,8 +104,8 @@ async function registerTeacherStudents(teacherEmail, studentEmails) {
     /**
      * Registers a teacher and a student into the notifiation table
      * 
-     * Creates teacher/student if teacher/student does not exist 
-     * and adds into notification table
+     * 1) Creates teacher/student if teacher/student does not exist 
+     * 2) Adds into notification table when all teacher/students are created
      * 
      * Returns
      * - True if success
@@ -118,24 +117,27 @@ async function registerTeacherStudents(teacherEmail, studentEmails) {
     let createStudentPromises = [];
     studentEmails.forEach(studentEmail => createStudentPromises.push(createUserInTableIfNotExist(studentEmail, STUDENT_TABLE)));
 
-    // Wait for all students to be created
-    await Promise.all([createTeacherPromise, ...createStudentPromises]).catch(err => {
-        logger.log("registerTeacherStudents:" + err);
-        return false;
-    });
-
-    // Set notifications
-    let addNotificationPromises = [];
-    studentEmails.forEach(studentEmail => addNotificationPromises.push(addNotificationTeacherStudent(teacherEmail, studentEmail)));
-
-    await Promise.all(addNotificationPromises)
-    .then(() => {
-        return true;
+    return new Promise((resolve, reject) => {
+        // Wait for all students to be created
+        Promise.all([createTeacherPromise, ...createStudentPromises]).catch(err => {
+            logger.log("registerTeacherStudents:" + err);
+            resolve(false);
+        })
+        .then(() =>{
+            // Set notifications
+            let addNotificationPromises = [];
+            studentEmails.forEach(studentEmail => addNotificationPromises.push(addNotificationTeacherStudent(teacherEmail, studentEmail)));
+    
+            Promise.all(addNotificationPromises)
+            .then(() => {
+                resolve(true);
+            })
+            .catch(err => {
+                logger.log("registerTeacherStudents:" + err);
+                resolve(false);
+            });
+        });
     })
-    .catch(err => {
-        logger.log("registerTeacherStudents:" + err);
-        return false;
-    });
 }
 
 async function getCommonStudentsFromTeachers(teacherEmails) {

@@ -26,6 +26,7 @@ router.post('/register', async (req, res, next) => {
     const students = values.students;
     
     const success = await db.registerTeacherStudents(teacher, students);
+
     if (success) {
         res.status(204).send()
     } else {

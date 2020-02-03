@@ -3,13 +3,12 @@ FROM node:8.10.0
 WORKDIR /app/
 COPY . .
 
-ENV TZ Asia/Singapore
-
-RUN echo "Asia/Singapore" > /etc/timezone
-RUN dpkg-reconfigure -f noninteractive tzdata
-
 ENV PORT 9800
 
-CMD ["node", "app.js"]
+RUN npm install
+
+RUN chmod +x ./wait-for-it.sh
+
+CMD ["./wait-for-it.sh", "--timeout=0", "mysql:3306", "--", "sh", "container-start.sh"]
 
 EXPOSE 9800

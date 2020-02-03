@@ -94,7 +94,8 @@ router.post('/retrievefornotifications', async (req, res, next) => {
             return;
         }
 
-        allRecipients = [...notSuspendedMentionedStudents, ...studentEmails];
+        // Remove duplicates - mentioned person can be under the teacher as well
+        allRecipients = Array.from(new Set([...notSuspendedMentionedStudents, ...studentEmails]));
 
         res.status(200).send({
             recipients: allRecipients
@@ -104,3 +105,7 @@ router.post('/retrievefornotifications', async (req, res, next) => {
 })
 
 module.exports = router;
+
+if (process.env.NODE_ENV === "test") {
+    module.exports.getStudentsInNotification = getStudentsInNotification
+}

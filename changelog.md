@@ -1,3 +1,9 @@
+# v0.0.16
+- Fix duplicate email on notifications retrieval when teacher has the mentioned student
+- Fix register returning 500 on success - promise issue
+- Changed db client host to 'mysql' for docker demo
+- Modified dockerfile to wait for mysql to be ready before starting node service.
+
 # v0.0.15
 - Added test module 'jest'
 - Added unit test for parsing notifications
